@@ -1,0 +1,481 @@
+{
+ "metadata": {
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.10-final"
+  },
+  "orig_nbformat": 2,
+  "kernelspec": {
+   "name": "Python 3.6.10 64-bit ('p3hw': conda)",
+   "display_name": "Python 3.6.10 64-bit ('p3hw': conda)",
+   "metadata": {
+    "interpreter": {
+     "hash": "d35a1a8ea6b654d83ed206228484f91a5dfcb8c463f56ca07531d1ba92b11ea2"
+    }
+   }
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2,
+ "cells": [
+  {
+   "source": [
+    "# Python & SQLite\n",
+    "## Create and manipulate databases with python, sqlite3 and pandas.\n"
+   ],
+   "cell_type": "markdown",
+   "metadata": {}
+  },
+  {
+   "source": [
+    "## 1. Import all libraries needed\n"
+   ],
+   "cell_type": "markdown",
+   "metadata": {}
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd \n",
+    "import sqlite3\n",
+    "from sqlite3 import Error"
+   ]
+  },
+  {
+   "source": [
+    "## 2. Define the class sqlite_base\n",
+    "\n",
+    "### 2.1 Create a database connection\n",
+    "### 2.2 Create an end connection method\n",
+    "### 2.3 Create a table\n",
+    "### 2.4 Add data to the table\n",
+    "### 2.5 Delete a row or a table"
+   ],
+   "cell_type": "markdown",
+   "metadata": {}
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Class sqlite_base\n",
+    "class sqlite_base:\n",
+    "    \"\"\"Database creation, where:\n",
+    "    file_base = Database file location.\n",
+    "    \"\"\"    \n",
+    "    def __init__(self,db_file):\n",
+    "        self.db_connection = None\n",
+    "        self.db_file = db_file\n",
+    "\n",
+    "    # Initialize the connection\n",
+    "    def init_connection(self):\n",
+    "        \"\"\"\n",
+    "        Initialize connection\n",
+    "        \"\"\"\n",
+    "        # Try to access or create the file in the directory\n",
+    "        try:\n",
+    "            self.db_connection = sqlite3.connect(self.db_file)\n",
+    "            self.cursor = self.db_connection.cursor()\n",
+    "        except Error as e:\n",
+    "            self.db_connection = None\n",
+    "            print(e)\n",
+    "    # End connection:\n",
+    "    def end_connection(self):\n",
+    "        \"\"\"\n",
+    "        End connection\n",
+    "        \"\"\"\n",
+    "        self.cursor.close()\n",
+    "        self.db_connection.close()\n",
+    "\n",
+    "\n",
+    "    # Create a table method\n",
+    "    def create_table(self,sql_table):\n",
+    "        \"\"\"Table creation, where:\n",
+    "        sql_table = SQL injection of table creation.\n",
+    "        \"\"\"\n",
+    "        if self.db_connection is not None:\n",
+    "            try:                \n",
+    "                self.cursor.execute(sql_table)\n",
+    "            except Error as e:\n",
+    "                print(e)\n",
+    "        else:\n",
+    "            print(\"Error: Connot connect to the database.\")\n",
+    "\n",
+    "    #Create a content method\n",
+    "    def add_content(self,sql_template,values):\n",
+    "        \"\"\"Data insertion, where:\n",
+    "        sql_template = SQL table structure.\n",
+    "        values = The row values ordered acording to sql_template.\n",
+    "        \"\"\"\n",
+    "        if self.db_connection is not None:\n",
+    "            try:\n",
+    "                self.cursor.execute(sql_template,values)\n",
+    "                self.db_connection.commit()\n",
+    "                self.lastword_id = self.cursor.lastrowid\n",
+    "            except Error as e:\n",
+    "                print(e)\n",
+    "        else:\n",
+    "            print(\"Error: Connot connect to the database.\")  \n",
+    "\n",
+    "    #Define delete method\n",
+    "    def delete_content(self,table,id_or_all):\n",
+    "        \"\"\" Delete a row by id or all \n",
+    "        table = The name of the table\n",
+    "        id_or_all = Tuple id or the text 'all'\n",
+    "        \"\"\"\n",
+    "        if self.db_connection is not None:\n",
+    "            try:\n",
+    "                if id_or_all is 'all':\n",
+    "                    sql = 'DELETE FROM ' + table\n",
+    "                    self.cursor.execute(sql)\n",
+    "                else:\n",
+    "                    sql = 'DELETE FROM ' + table + ' WHERE id=?'\n",
+    "                    self.cursor.execute(sql,(id_or_all,))        \n",
+    "                \n",
+    "                self.db_connection.commit()                \n",
+    "            except Error as e:\n",
+    "                print(e)\n",
+    "        else:\n",
+    "            print(\"Error: Connot connect to the database.\")  \n",
+    "\n",
+    "\n",
+    "\n"
+   ]
+  },
+  {
+   "source": [
+    "# 3. Create the database object"
+   ],
+   "cell_type": "markdown",
+   "metadata": {}
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Define the database location <data_base_file> = r\"/home/user/project_folder/database_file.db\"\n",
+    "database = <data_base_file>\n",
+    "# Create the database object\n",
+    "db_project_task = sqlite_base(database)\n",
+    "# Initialize connection\n",
+    "db_project_task.init_connection()\n"
+   ]
+  },
+  {
+   "source": [
+    "# 4. Create the database tables"
+   ],
+   "cell_type": "markdown",
+   "metadata": {}
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#Projects table SQL injection\n",
+    "sql_create_projects_table = \"\"\" CREATE TABLE IF NOT EXISTS projects (\n",
+    "                                    id integer PRIMARY KEY,\n",
+    "                                    name text NOT NULL,\n",
+    "                                    begin_date text,\n",
+    "                                    end_date text\n",
+    "                                );\"\"\"\n",
+    "\n",
+    "\n",
+    "db_project_task.create_table(sql_create_projects_table)\n",
+    "\n",
+    "\n",
+    "   "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#Tasks table SQL injection\n",
+    "sql_create_tasks_table = \"\"\"CREATE TABLE IF NOT EXISTS tasks (\n",
+    "                                id integer PRIMARY KEY,\n",
+    "                                name text NOT NULL,\n",
+    "                                priority integer,\n",
+    "                                project_id integer NOT NULL,\n",
+    "                                begin_date text NOT NULL,\n",
+    "                                end_date text NOT NULL,\n",
+    "                                FOREIGN KEY (project_id) REFERENCES projects (id)\n",
+    "                            );\"\"\"\n",
+    "\n",
+    "db_project_task.create_table(sql_create_tasks_table)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create a connection out of the class\n",
+    "db_connection = db_project_task.db_connection"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [
+    {
+     "output_type": "execute_result",
+     "data": {
+      "text/plain": [
+       "Empty DataFrame\n",
+       "Columns: [id, name, begin_date, end_date]\n",
+       "Index: []"
+      ],
+      "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>id</th>\n      <th>name</th>\n      <th>begin_date</th>\n      <th>end_date</th>\n    </tr>\n  </thead>\n  <tbody>\n  </tbody>\n</table>\n</div>"
+     },
+     "metadata": {},
+     "execution_count": 8
+    }
+   ],
+   "source": [
+    "# Visualize the projects table\n",
+    "\n",
+    "consult_projects = pd.read_sql_query(\"SELECT * FROM projects\", db_connection)\n",
+    "consult_projects"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "output_type": "execute_result",
+     "data": {
+      "text/plain": [
+       "Empty DataFrame\n",
+       "Columns: [id, name, priority, project_id, begin_date, end_date]\n",
+       "Index: []"
+      ],
+      "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>id</th>\n      <th>name</th>\n      <th>priority</th>\n      <th>project_id</th>\n      <th>begin_date</th>\n      <th>end_date</th>\n    </tr>\n  </thead>\n  <tbody>\n  </tbody>\n</table>\n</div>"
+     },
+     "metadata": {},
+     "execution_count": 9
+    }
+   ],
+   "source": [
+    "# Visualize the tasks table\n",
+    "consult_tasks = pd.read_sql_query(\"SELECT * FROM tasks\", db_connection)\n",
+    "consult_tasks"
+   ]
+  },
+  {
+   "source": [
+    "# 5. Add data to the tables"
+   ],
+   "cell_type": "markdown",
+   "metadata": {}
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create the templates\n",
+    "sql_projects_template = '''INSERT INTO projects(name,begin_date,end_date)\n",
+    "            values(?,?,?)'''\n",
+    "sql_tasks_template = '''INSERT INTO tasks(name,priority,project_id,begin_date,end_date)\n",
+    "            values(?,?,?,?,?)'''\n",
+    "\n",
+    "# The sequence matter here\n",
+    "project_values = ('Python App','01-01-1999','01-02-1999')\n",
+    "db_project_task.add_content(sql_projects_template,project_values)\n",
+    "project_id = db_project_task.lastword_id\n",
+    "task_1_values = ('Analize requirements',1,project_id,'01-01-1991','03-01-1999')\n",
+    "task_2_values = ('Confirm requirements',1,project_id,'04-01-1991','05-01-1999')\n",
+    "db_project_task.add_content(sql_tasks_template,task_1_values)\n",
+    "db_project_task.add_content(sql_tasks_template,task_2_values)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [
+    {
+     "output_type": "execute_result",
+     "data": {
+      "text/plain": [
+       "   id        name  begin_date    end_date\n",
+       "0   1  Python App  01-01-1999  01-02-1999"
+      ],
+      "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>id</th>\n      <th>name</th>\n      <th>begin_date</th>\n      <th>end_date</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>1</td>\n      <td>Python App</td>\n      <td>01-01-1999</td>\n      <td>01-02-1999</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+     },
+     "metadata": {},
+     "execution_count": 12
+    }
+   ],
+   "source": [
+    "# Visualize the projects table\n",
+    "\n",
+    "consult_projects = pd.read_sql_query(\"SELECT * FROM projects\", db_connection)\n",
+    "consult_projects"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [
+    {
+     "output_type": "execute_result",
+     "data": {
+      "text/plain": [
+       "   id                  name  priority  project_id  begin_date    end_date\n",
+       "0   1  Analize requirements         1           1  01-01-1991  03-01-1999\n",
+       "1   2  Confirm requirements         1           1  04-01-1991  05-01-1999"
+      ],
+      "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>id</th>\n      <th>name</th>\n      <th>priority</th>\n      <th>project_id</th>\n      <th>begin_date</th>\n      <th>end_date</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>1</td>\n      <td>Analize requirements</td>\n      <td>1</td>\n      <td>1</td>\n      <td>01-01-1991</td>\n      <td>03-01-1999</td>\n    </tr>\n    <tr>\n      <th>1</th>\n      <td>2</td>\n      <td>Confirm requirements</td>\n      <td>1</td>\n      <td>1</td>\n      <td>04-01-1991</td>\n      <td>05-01-1999</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+     },
+     "metadata": {},
+     "execution_count": 13
+    }
+   ],
+   "source": [
+    "# Visualize the tasks table\n",
+    "consult_tasks = pd.read_sql_query(\"SELECT * FROM tasks\", db_connection)\n",
+    "consult_tasks"
+   ]
+  },
+  {
+   "source": [
+    "# 6. Update some data"
+   ],
+   "cell_type": "markdown",
+   "metadata": {}
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sql_tasks_update = \"\"\"UPDATE tasks\n",
+    "                    SET priority = ?,\n",
+    "                        begin_date = ?,\n",
+    "                        end_date = ?\n",
+    "                    WHERE id = ?\n",
+    "                    \"\"\"\n",
+    "task_update = (2,'05-01-1991','06-01-1999',2)\n",
+    "db_project_task.add_content(sql_tasks_update,task_update)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [
+    {
+     "output_type": "execute_result",
+     "data": {
+      "text/plain": [
+       "   id                  name  priority  project_id  begin_date    end_date\n",
+       "0   1  Analize requirements         1           1  01-01-1991  03-01-1999\n",
+       "1   2  Confirm requirements         2           1  05-01-1991  06-01-1999"
+      ],
+      "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>id</th>\n      <th>name</th>\n      <th>priority</th>\n      <th>project_id</th>\n      <th>begin_date</th>\n      <th>end_date</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>1</td>\n      <td>Analize requirements</td>\n      <td>1</td>\n      <td>1</td>\n      <td>01-01-1991</td>\n      <td>03-01-1999</td>\n    </tr>\n    <tr>\n      <th>1</th>\n      <td>2</td>\n      <td>Confirm requirements</td>\n      <td>2</td>\n      <td>1</td>\n      <td>05-01-1991</td>\n      <td>06-01-1999</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+     },
+     "metadata": {},
+     "execution_count": 16
+    }
+   ],
+   "source": [
+    "# Visualize the tasks table\n",
+    "consult_tasks = pd.read_sql_query(\"SELECT * FROM tasks\", db_connection)\n",
+    "consult_tasks"
+   ]
+  },
+  {
+   "source": [
+    "# 7. Delete some data"
+   ],
+   "cell_type": "markdown",
+   "metadata": {}
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Delete a task\n",
+    "db_project_task.delete_content('tasks',2)\n",
+    "#db_project_task.delete_content('projects','all')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [
+    {
+     "output_type": "execute_result",
+     "data": {
+      "text/plain": [
+       "   id        name  begin_date    end_date\n",
+       "0   1  Python App  01-01-1999  01-02-1999"
+      ],
+      "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>id</th>\n      <th>name</th>\n      <th>begin_date</th>\n      <th>end_date</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>1</td>\n      <td>Python App</td>\n      <td>01-01-1999</td>\n      <td>01-02-1999</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+     },
+     "metadata": {},
+     "execution_count": 21
+    }
+   ],
+   "source": [
+    "# Visualize the tasks table\n",
+    "consult_tasks = pd.read_sql_query(\"SELECT * FROM projects\", db_connection)\n",
+    "consult_tasks"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {},
+   "outputs": [
+    {
+     "output_type": "execute_result",
+     "data": {
+      "text/plain": [
+       "   id                  name  priority  project_id  begin_date    end_date\n",
+       "0   1  Analize requirements         1           1  01-01-1991  03-01-1999"
+      ],
+      "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>id</th>\n      <th>name</th>\n      <th>priority</th>\n      <th>project_id</th>\n      <th>begin_date</th>\n      <th>end_date</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>1</td>\n      <td>Analize requirements</td>\n      <td>1</td>\n      <td>1</td>\n      <td>01-01-1991</td>\n      <td>03-01-1999</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+     },
+     "metadata": {},
+     "execution_count": 22
+    }
+   ],
+   "source": [
+    "consult_tasks = pd.read_sql_query(\"SELECT * FROM tasks\", db_connection)\n",
+    "consult_tasks"
+   ]
+  }
+ ]
+}
